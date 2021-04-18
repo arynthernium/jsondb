@@ -13,22 +13,47 @@ app.get('/', function(req, res) {
 });
 
 app.get('/:table', function(req, res) {
-	// if (req.header('password') == process.env.password) {
-    res.send(`${fs.readFileSync('./json/' + req.params.table + '.json')}`);
-	// } else {
-	// 	res.send('invalid or missing password. include it as the \'password\' header')
-	// };
+    res.send(`${fs.readFileSync('./json/' + req.params.table + '.json', 'utf8')}`);
 });
 
 app.get('/:table/:entryid', function(req, res) {
-	// if (req.header('password') == process.env.password) {
 		tabledata = JSON.parse(fs.readFileSync('./json/' + req.params.table +'.json', 'utf8'));
 		returnjson = jp.query(tabledata, `$..[?(@._id =='${req.params.entryid}')]`)
 		res.send(returnjson);
-	// } else {
-	// 	res.send('invalid or missing password. include it as the \'password\' header')
-	// };
 });
+
+app.post('/:table', function(req, res) {
+    res.send(`${fs.writeFileSync('./json/' + req.params.table + '.json')}`);
+});
+
+app.post('/:table/:entryid', function(req, res) {
+
+	if (fs.existsSync('./json/' + req.params.table +'.json')) {
+
+		var jsondata = JSON.parse(fs.readFileSync('./json/' + req.params.table +'.json', 'utf8'));
+		console.log(`Pre-write table: ${JSON.stringify(jsondata)}`);
+
+		var entry = [{}];
+		entry[0]._id = uuidv4();
+		entry[0]._date = new Date();
+		entrydataobj = JSON.parse(entrydata);
+		entry[0] = Object.assign(entry[0], entrydataobj);
+
+		console.log(entry);
+
+		jsondata = jsondata.concat(entry);
+		console.log(jsondata);
+
+		fs.writeFileSync('./json/' + req.params.table +'.json', `${JSON.stringify(jsondata)}`, function(err) {
+			if (err) throw err;
+		});
+
+		tabledata = JSON.parse(fs.readFileSync('./json/' + req.params.table +'.json', ``));
+		returnjson = jp.query(tabledata, `$..[?(@._id =='${req.params.entryid}')]`)
+		res.send('Created entry in table: ' + req.params.table + 'adding entry: ' + req.params.entry);
+
+	}
+}); // CONTINUE WORKING ON THIS
 
 io.sockets.on('connection', function(socket) {
 
